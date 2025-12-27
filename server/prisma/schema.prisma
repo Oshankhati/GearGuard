@@ -1,0 +1,168 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+////////////////////
+/// ENUMS
+////////////////////
+
+enum RoleName {
+  ADMIN
+  MANAGER
+  TECHNICIAN
+  REQUESTER
+}
+
+enum RequestType {
+  CORRECTIVE
+  PREVENTIVE
+}
+
+enum RequestStatus {
+  NEW
+  IN_PROGRESS
+  REPAIRED
+  SCRAP
+}
+
+enum LogAction {
+  STATUS_CHANGED
+  ASSIGNED
+  SCRAPPED
+}
+
+////////////////////
+/// MODELS
+////////////////////
+
+model Role {
+  id    Int      @id @default(autoincrement())
+  name  RoleName @unique
+
+  users User[]
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  roleId    Int
+  createdAt DateTime @default(now())
+
+  role Role @relation(fields: [roleId], references: [id])
+
+  employee   Employee?
+  technician Technician?
+
+  createdRequests MaintenanceRequest[] @relation("RequestCreator")
+  logs            MaintenanceLog[]
+}
+
+model Department {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  employees Employee[]
+  equipment Equipment[]
+}
+
+model Employee {
+  id           Int @id @default(autoincrement())
+  userId       Int @unique
+  departmentId Int
+
+  user       User       @relation(fields: [userId], references: [id])
+  department Department @relation(fields: [departmentId], references: [id])
+
+  equipment Equipment[]
+}
+
+model MaintenanceTeam {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  technicians Technician[]
+  equipment   Equipment[]
+  requests    MaintenanceRequest[]
+}
+
+model Technician {
+  id     Int @id @default(autoincrement())
+  userId Int @unique
+  teamId Int
+
+  user User            @relation(fields: [userId], references: [id])
+  team MaintenanceTeam @relation(fields: [teamId], references: [id])
+
+  assignedRequests MaintenanceRequest[]
+  defaultEquipment Equipment[]
+}
+
+model Equipment {
+  id              Int      @id @default(autoincrement())
+  name            String
+  serialNumber    String   @unique
+  purchaseDate    DateTime
+  warrantyExpiry  DateTime
+  location        String
+  isScrapped      Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  departmentId Int
+  employeeId   Int?
+  teamId       Int
+  technicianId Int
+
+  department Department      @relation(fields: [departmentId], references: [id])
+  employee   Employee?       @relation(fields: [employeeId], references: [id])
+  team       MaintenanceTeam @relation(fields: [teamId], references: [id])
+  technician Technician     @relation(fields: [technicianId], references: [id])
+
+  requests MaintenanceRequest[]
+}
+
+model MaintenanceRequest {
+  id        Int           @id @default(autoincrement())
+  subject   String
+  type      RequestType
+  status    RequestStatus @default(NEW)
+
+  scheduledDate DateTime?
+  hoursSpent    Float?
+
+  equipmentId   Int
+  teamId        Int
+  technicianId  Int?
+  createdById   Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  equipment  Equipment       @relation(fields: [equipmentId], references: [id])
+  team       MaintenanceTeam @relation(fields: [teamId], references: [id])
+  technician Technician?     @relation(fields: [technicianId], references: [id])
+
+  createdBy User @relation("RequestCreator", fields: [createdById], references: [id])
+
+  logs MaintenanceLog[]
+}
+
+model MaintenanceLog {
+  id        Int      @id @default(autoincrement())
+  action    LogAction
+  oldValue  String?
+  newValue  String?
+  createdAt DateTime @default(now())
+
+  requestId Int
+  userId    Int
+
+  request MaintenanceRequest @relation(fields: [requestId], references: [id])
+  user    User               @relation(fields: [userId], references: [id])
+}
