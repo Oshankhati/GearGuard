@@ -94,36 +94,53 @@ exports.deleteDepartment = async (req, res) => {
     }
 };
 
-// Assign employee to department
-exports.assignEmployeeToDepartment = async (req, res) => {
+// Assign users to department
+exports.assignUsersToDepartment = async (req, res) => {
     try {
-        const { userId } = req.body;
-        const departmentId = parseInt(req.params.id);
+        const { userId, departmentId } = req.body;
 
         // Check if department exists
         const department = await prisma.department.findUnique({
-            where: { id: departmentId }
+            where: { id: parseInt(departmentId) }
         });
         if (!department) {
             return res.status(404).json({ message: 'Department not found' });
         }
 
-        // Check if employee exists
-        const employee = await prisma.employee.findUnique({
-            where: { id: employeeId }
+        // Check if user exists
+        const user = await prisma.user.findUnique({
+            where: { id: parseInt(userId) }
         });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if employee record exists for this user
+        const employee = await prisma.employee.findUnique({
+            where: { userId: parseInt(userId) }
+        });
+
         if (!employee) {
-            return res.status(404).json({ message: 'Employee not found' });
+            return res.status(404).json({ message: 'Employee record not found for this user' });
         }
 
         // Update employee's department
         const updatedEmployee = await prisma.employee.update({
-            where: { id: employeeId },
-            data: { departmentId: departmentId }
+            where: { userId: parseInt(userId) },
+            data: { departmentId: parseInt(departmentId) },
+            include: {
+                user: {
+                    select: {
+                        name: true,
+                        email: true
+                    }
+                },
+                department: true
+            }
         });
 
         res.status(200).json({
-            message: 'Employee assigned to department successfully',
+            message: 'User assigned to department successfully',
             employee: updatedEmployee
         });
     } catch (error) {

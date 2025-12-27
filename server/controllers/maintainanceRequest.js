@@ -427,4 +427,101 @@ module.exports = {
     getUnassignedRequests,
     acceptMaintenanceRequest,
     updateRequestStatus,
+    getAllMaintenanceRequests: getUnassignedRequests, // Alias
+    getMaintenanceRequestById: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const request = await prisma.maintenanceRequest.findUnique({
+                where: { id: parseInt(id) },
+                include: {
+                    equipment: {
+                        include: {
+                            department: true,
+                            team: true,
+                        }
+                    },
+                    team: true,
+                    technician: {
+                        include: {
+                            user: {
+                                select: {
+                                    name: true,
+                                    email: true
+                                }
+                            }
+                        }
+                    },
+                    createdBy: {
+                        select: {
+                            name: true,
+                            email: true
+                        }
+                    }
+                }
+            });
+
+            if (!request) {
+                return res.status(404).json({ error: 'Maintenance request not found' });
+            }
+
+            res.json(request);
+        } catch (error) {
+            console.error('Error fetching request:', error);
+            res.status(500).json({ error: 'Failed to fetch request' });
+        }
+    },
+    updateMaintenanceRequest: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { subject, type, scheduledDate, hoursSpent } = req.body;
+
+            const updateData = {};
+            if (subject) updateData.subject = subject;
+            if (type) updateData.type = type;
+            if (scheduledDate !== undefined) updateData.scheduledDate = scheduledDate ? new Date(scheduledDate) : null;
+            if (hoursSpent !== undefined) updateData.hoursSpent = hoursSpent;
+
+            const request = await prisma.maintenanceRequest.update({
+                where: { id: parseInt(id) },
+                data: updateData,
+                include: {
+                    equipment: true,
+                    team: true,
+                    technician: {
+                        include: {
+                            user: {
+                                select: {
+                                    name: true,
+                                    email: true
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            res.json({
+                message: 'Request updated successfully',
+                request
+            });
+        } catch (error) {
+            console.error('Error updating request:', error);
+            res.status(500).json({ error: 'Failed to update request' });
+        }
+    },
+    deleteMaintenanceRequest: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            await prisma.maintenanceRequest.delete({
+                where: { id: parseInt(id) }
+            });
+
+            res.json({ message: 'Request deleted successfully' });
+        } catch (error) {
+            console.error('Error deleting request:', error);
+            res.status(500).json({ error: 'Failed to delete request' });
+        }
+    },
+    updateMaintenanceStatus: updateRequestStatus // Alias
 };

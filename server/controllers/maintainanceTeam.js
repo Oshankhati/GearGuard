@@ -124,11 +124,11 @@ const removeTechnicianFromTeam = async (req, res) => {
 };
 
 module.exports = {
-    getAllMaintenanceTeams,
-    getMaintenanceTeamById,
-    createMaintenanceTeam,
-    updateMaintenanceTeam,
-    deleteMaintenanceTeam,
-    addTechnicianToTeam,
-    addTechnicianToTeam
+    getAllTeams: getAllMaintenanceTeams,
+    getTeamById: getMaintenanceTeamById,
+    createTeam: createMaintenanceTeam,
+    updateTeam: updateMaintenanceTeam,
+    deleteTeam: deleteMaintenanceTeam,
+    addTechnician: addTechnicianToTeam,
+    removeTechnician: removeTechnicianFromTeam
 };

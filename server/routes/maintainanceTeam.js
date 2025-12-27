@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const auth = require('../middleware/auth');
-const maintenanceTeamController = require('../controllers/maintenanceTeamController');
+const auth = require('../middlewares/auth');
+const maintenanceTeamController = require('../controllers/maintainanceTeam');
 
 // Get all maintenance teams
 router.get('/', auth, maintenanceTeamController.getAllTeams);
