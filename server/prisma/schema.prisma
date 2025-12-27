@@ -26,36 +26,36 @@ enum RequestType {
 enum RequestStatus {
   NEW
   IN_PROGRESS
-  REPAIRED
+  COMPLETED
   SCRAP
+  CANCELLED
 }
 
 enum LogAction {
   STATUS_CHANGED
   ASSIGNED
   SCRAPPED
+  COMPLETED
+}
+enum UserRole {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+  TECHNICIAN
 }
 
 ////////////////////
 /// MODELS
 ////////////////////
 
-model Role {
-  id    Int      @id @default(autoincrement())
-  name  RoleName @unique
-
-  users User[]
-}
 
 model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
   password  String
-  roleId    Int
+  role      UserRole
   createdAt DateTime @default(now())
-
-  role Role @relation(fields: [roleId], references: [id])
 
   employee   Employee?
   technician Technician?
@@ -75,10 +75,10 @@ model Department {
 model Employee {
   id           Int @id @default(autoincrement())
   userId       Int @unique
-  departmentId Int
+  departmentId Int?
 
-  user       User       @relation(fields: [userId], references: [id])
-  department Department @relation(fields: [departmentId], references: [id])
+  user       User        @relation(fields: [userId], references: [id])
+  department Department? @relation(fields: [departmentId], references: [id])
 
   equipment Equipment[]
 }
@@ -95,13 +95,12 @@ model MaintenanceTeam {
 model Technician {
   id     Int @id @default(autoincrement())
   userId Int @unique
-  teamId Int
+  teamId Int?
 
-  user User            @relation(fields: [userId], references: [id])
-  team MaintenanceTeam @relation(fields: [teamId], references: [id])
+  user User             @relation(fields: [userId], references: [id])
+  team MaintenanceTeam? @relation(fields: [teamId], references: [id])
 
   assignedRequests MaintenanceRequest[]
-  defaultEquipment Equipment[]
 }
 
 model Equipment {
@@ -117,12 +116,10 @@ model Equipment {
   departmentId Int
   employeeId   Int?
   teamId       Int
-  technicianId Int
 
   department Department      @relation(fields: [departmentId], references: [id])
   employee   Employee?       @relation(fields: [employeeId], references: [id])
   team       MaintenanceTeam @relation(fields: [teamId], references: [id])
-  technician Technician     @relation(fields: [technicianId], references: [id])
 
   requests MaintenanceRequest[]
 }

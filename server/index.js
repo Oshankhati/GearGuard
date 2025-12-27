@@ -1,8 +1,10 @@
 const express = require('express');
-
+const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors({origin: '*'}));
+app.use(express.urlencoded({ extended: true}));
 app.use(express.json());
 
 // Add CORS middleware
@@ -21,15 +23,10 @@ app.get('/', (req, res) => {
     res.json({ message: 'Welcome to the API' });
 });
 
-// Add events endpoint
-app.get('/api/events', (req, res) => {
-    const events = [
-        { date: "2025-12-14", label: "AC Check", type: "preventive" },
-        { date: "2025-12-20", label: "Machine Failure", type: "breakdown" },
-        { date: "2025-12-27", label: "Inspection", type: "inspection" }
-    ];
-    res.json(events);
-});
+app.use('/api/auth', require('./routes/authRoute'));
+app.use('/api/departments', require('./routes/department'));
+app.use('/api/maintenance-teams', require('./routes/maintainanceTeam'));
+app.use('/api/maintenance-requests', require('./routes/maintainanceRequest'));
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
